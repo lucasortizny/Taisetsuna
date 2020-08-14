@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.ObjectInputFilter;
 import java.util.Scanner;
 
 /**
@@ -18,7 +17,8 @@ public class Configuration {
     //This is going to be the class where the config.json is going to be serialized.
     private String token; //Token for the bot
     public String statusmsg; //Message for the status message
-    public int activitystatus; //Will be depicted as an Integer
+    public int statuscode; //Will be depicted as an Integer
+    public transient File input; //This parameter is to allow changing between different configuration files.
 
     /**
      * Default constructor with the default value.
@@ -26,27 +26,29 @@ public class Configuration {
     Configuration (){
         this.token = "";
         this.statusmsg = "default status message";
-        this.activitystatus = 0;
+        this.statuscode = 0;
+        this.input = new File ("./config.json");
     }
 
     /**
-     * Enhanced constructor that is here just in case individual values need to be modified outside of json file.
+     * Constructor for internal use. Most likely will not be used but it is here for internal use.
      * @param token - Token for the discord bot to function properly.
      * @param statusmsg - This is going to be the message for the status bar, only active in some activitystatus types.
      * @param activitystatus - This determines the prefix "Playing", "Watching", "Listening to", or any other status
      *                       that discord has for the status prefix.
      */
-    Configuration (String token, String statusmsg, int activitystatus) {
+    Configuration (String token, String statusmsg, int activitystatus, File input) {
         this.token = token;
         this.statusmsg = statusmsg;
-        this.activitystatus = activitystatus;
+        this.statuscode = activitystatus;
+        this.input = input;
     }
 
     //Getters + Setters for token || This will not be necessary so long as the JSON file exist and can be read.
     //Therefore, these two methods are really for internal use only.
 
     /**
-     * We want to make the token for the bot a private matter so we are going to make the token modifiable thru get/set.
+     * We want to make the token for the bot a private matter so we are going to make the token modifiable in get/set.
      * @return - The token as a string value.
      */
     public String getToken(){
@@ -54,7 +56,7 @@ public class Configuration {
     }
 
     /**
-     * We want to make the token for the bot a private matter so we are going to make the token modifiable thru get/set.
+     * We want to make the token for the bot a private matter so we are going to make the token modifiable in get/set.
      * @param input - Takes in a string that will change the value of the token.
      */
     public void setToken(String input){
@@ -64,19 +66,18 @@ public class Configuration {
     /**
      * This method is do create a new configuration file. Normally it is called in the scneario it can't be loaded.
      * This method comes in useful for first time startup or from an error in formatting.
-     * @param input - This is the file we are going to be writing to that will contain default values of a Configuration
-     *              object so that it can be modified and loaded in later via "loadConfig"
      */
-    public void createNewConfig(File input){
+    public void createNewConfig(){
         //Try to get the file if it exists and write to it.
 
         try {
-            File configurationfile = input;
 
-            configurationfile.createNewFile(); //If there is any issue doing this, exception will be thrown and we exit.
+            if (!input.exists())
+
+                input.createNewFile(); //If there is any issue doing this, exception will be thrown and we exit.
 
             Gson jsonconverter = new GsonBuilder().setPrettyPrinting().create();
-            FileWriter writer = new FileWriter(configurationfile);
+            FileWriter writer = new FileWriter(input);
             writer.write(jsonconverter.toJson(this));
             writer.flush();
             writer.close();
@@ -92,30 +93,31 @@ public class Configuration {
     /**
      * This method is to read from a configuration file and build an object based on the file's contents.
      * This method will come in useful to resume after we have shut the bot down in the past, we save the settings.
-     * @param input - This is going to be the file we are reading from.
-     * @return - Returns a configuration object already set with the parameters loaded from the file input.
      */
-    public static Configuration loadFromConfig(File input){
-        try {
-            File configjson = input;
-            Gson gson = new Gson();
-            String fileread = readFileToString(configjson);
+    public void loadFromConfig(){
 
+        try {
+
+            Gson gson = new Gson();
+            String fileread = readFileToString(input);
             //Set the current object equal to a new object with the proper JSON config read.
 
-            Configuration retconf = gson.fromJson(fileread, Configuration.class);
-            retconf.createNewConfig(input);
-            return retconf;
+            Configuration loaded = gson.fromJson(fileread, Configuration.class);
+            this.setToken(loaded.getToken());
+            this.statuscode = loaded.statuscode;
+            this.statusmsg = loaded.statusmsg;
+
 
 
 
         } catch (Exception e){
             e.printStackTrace();
+            Configuration newconfig = new Configuration();
+            newconfig.createNewConfig();
         }
 
-        Configuration newconfig = new Configuration();
-        newconfig.createNewConfig(input);
-        return newconfig;
+
+
 
     }
 
@@ -125,11 +127,11 @@ public class Configuration {
      * @param input -  This is going to be the file input that will be updated.
      * @return - Returns true if successful, false if not successful. Probably won't be used but still useful to have.
      */
-    public boolean writeConfig (File input) {
+    public boolean updateConfig (File input) {
         try {
-            File configurationfile = input;
+
             Gson jsonconverter = new GsonBuilder().setPrettyPrinting().create();
-            FileWriter writer = new FileWriter(configurationfile);
+            FileWriter writer = new FileWriter(input);
             writer.write(jsonconverter.toJson(this));
             writer.flush();
             writer.close();
@@ -142,7 +144,12 @@ public class Configuration {
     }
 
 
-    //Method to Pull Activity based on Integer Value
+    /**
+     * This is meant to read the entirety of the file in a raw format and append it to a string via the StringBuilder
+     * to return.
+     * @param input - This method is going to ask for the file to read from. It will utilize the Scanner to read it.
+     * @return - It will return a String of the file in String format.
+     */
     public static String readFileToString (File input){
         try {
             StringBuilder converted = new StringBuilder();
@@ -156,7 +163,7 @@ public class Configuration {
             e.printStackTrace();
             System.exit(1);
         }
-        //Returns an empty StringBuilder if it is unable to read the file so that it is
+        //Returns an empty String if it is unable to read the file so that it is
         return "";
     }
 

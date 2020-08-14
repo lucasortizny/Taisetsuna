@@ -10,26 +10,34 @@ public class Main {
 
     public static File input = new File("./config.json");
     public static JDABuilder jdbuilder;
-    public static Configuration config;
+    public static Configuration mainconfig;
 
-    //Class to initialize the Bot
+    /**
+     * This is the main method. This is meant to instantiate the configuration and the bot.
+     * @param args - Commandline Arguments, used in the future to change configuration files on-the-go.
+     */
     public static void main(String[] args){
+        mainconfig = instantiateConfiguration();
+
+    }
+
+    /**
+     * This method is going to be instantiating the Configuration file based on how the config.json is read.
+     * @return - a Configuration object to use for the settings of the bot.
+     */
+    public static Configuration instantiateConfiguration(){
+        Configuration config = new Configuration();
 
         //If a configuration file exists, we are going to load from there rather than start from scratch.
         if (input.exists()) {
-            config = Configuration.loadFromConfig(input);
+            config.loadFromConfig();
         }
         //Handle the case where the file does not exist, start from scratch and create a new Configuration file.
         else {
             config = new Configuration();
-            config.createNewConfig(input);
+            config.createNewConfig();
         }
-
-
-
-
-
-
+        return config;
 
     }
 
