@@ -45,8 +45,8 @@ public class Configuration {
     }
 
     //Getters + Setters for token || This will not be necessary so long as the JSON file exist and can be read.
-    //Therefore, these two methods are really for internal use only.
 
+    //Therefore, these two methods are really for internal use only.
     /**
      * We want to make the token for the bot a private matter so we are going to make the token modifiable in get/set.
      * @return - The token as a string value.
@@ -54,6 +54,20 @@ public class Configuration {
     public String getToken(){
         return this.token;
     }
+
+    /**
+     * This method is to return the current file of the Bot Configuration, in case it is needed.
+     * @return - Returns and object of type 'File' for
+     */
+    public File getFile() {return this.input;}
+
+    /**
+     * This method is to change the File used by the bot so that a different set of configuration files is used.
+     * @param path - this is a String representation of a path to a file where the configuration file is held.
+     */
+    public void changeFile (String path) { this.input = new File(path);}
+
+
 
     /**
      * We want to make the token for the bot a private matter so we are going to make the token modifiable in get/set.
